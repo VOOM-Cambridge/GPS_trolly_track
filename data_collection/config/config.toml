@@ -1,0 +1,22 @@
+["constant"]
+
+[constant.gps]
+port = "/dev/ttyUSB0"
+name = "Trolly_1"
+type = "GNSS" # could also be GPS
+
+[constant.cellData]
+
+[mqtt]
+brokerIP = "localhost" #'mqtt.docker.local'
+port = 1883
+retainLast = true
+qos = 1
+
+[mqtt.publish]
+topic = "Transport_tracking/{constant.name}/"
+
+[sqlite3]
+dataBaseName = 'TRACKING'
+method = "api" # api or fileLocal
+path = "http://database.docker.local:8800" #local path is 'data/tracking.db'

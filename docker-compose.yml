@@ -1,0 +1,63 @@
+version: '2'
+
+services:
+    data_collection:
+        extends:
+            file: data_collection/app.yml
+            service: app
+        networks:
+            internal:
+                aliases:
+                    - database.docker.local
+        logging:
+                driver: syslog
+                options:
+                        tag: database.docker.local
+        restart: unless-stopped
+        depends_on:
+            - "sqlite-db"
+    mapviewer:
+        extends:
+            file: MapViewer/app.yml
+            service: app
+        networks:
+            internal:
+                aliases:
+                    - mapview.docker.local
+        logging:
+                driver: syslog
+                options:
+                        tag: mapview.docker.local
+        restart: unless-stopped
+        depends_on:
+            - "sqlite-db"
+    sqlite-db:
+        extends:
+            file: DB_Backend/app.yml
+            service: app
+        networks:
+            internal:
+                aliases:
+                    - sqlite-db
+        logging:
+                driver: syslog
+                options:
+                        tag: sqlite-db
+        restart: unless-stopped
+    # mqtt_broker:
+    #     extends:
+    #         file: mqtt_broker/app.yml
+    #         service: app
+    #     networks:
+    #         internal:
+    #             aliases:
+    #                 - mqtt.docker.local
+    #     logging:
+    #             driver: syslog
+    #             options:
+    #                     tag: docker-mqtt-broker
+    #     restart: unless-stopped
+
+networks:
+    internal:
+        name: shoestring-internal

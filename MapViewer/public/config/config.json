@@ -1,0 +1,27 @@
+{
+  "info": {
+    "name": "Trolly_1",
+    "appLoaction": "reciever",
+    "infomation_via": "db",
+    "infomation_via_other": "mqtt, db, LoRaWAN",
+    "otherLocations": "sender, transporter"
+  },
+  "db": {
+    "host": "d",
+    "port": 8800
+  },
+  "mqtt": {
+    "host": "129.169.48.173",
+    "port": "9001",
+    "topic": [
+      "Transport_tracking/#"
+    ]
+  },
+  "locations":
+    [ 
+      {"name": "3D Printing", "LatLong": [52.209661, 0.087625]},
+    {"name": "Robot Lab", "LatLong": [52.209297, 0.08719]},
+    {"name": "Design Studio", "LatLong": [52.209201, 0.087593]},
+    {"name": "Manual Assembly", "LatLong": [52.209237, 0.086935]}
+  ]
+}

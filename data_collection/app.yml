@@ -1,0 +1,17 @@
+version: "2"
+
+services:
+    app:
+        build: .
+        privileged: true
+        volumes:
+            - ./config:/app/config
+            - ./data:/app/data
+            - ./etc/localtime:/etc/localtime:ro
+            - ./run/udev:/run/udev:ro
+            - ./dev/bus/usb:/dev/bus/usb
+        restart: always
+        devices:
+            - /dev/input:/dev/input:ro
+
+
