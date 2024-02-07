@@ -147,7 +147,7 @@ const TrackingView = ({config}) => {
       const tempPosEnd = {"name": resE.data[0].NAME, "LatLong": [resE.data[0].LAT, resE.data[0].LON]}
       setPositionEnd({"name": resE.data[0].NAME, "LatLong": [resE.data[0].LAT, resE.data[0].LON]})
       setNewPositionEnd({"name": resE.data[0].NAME, "LatLong": [resE.data[0].LAT, resE.data[0].LON]})
-
+      
       if(tempPosEnd && tempPosStart){
         const expanFac = 1.2
         var maxLat_y = Math.max(tempPosEnd.LatLong[0], tempPosStart.LatLong[0], current[0]);

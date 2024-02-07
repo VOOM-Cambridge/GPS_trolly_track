@@ -3,15 +3,15 @@
     "name": "Trolly_1",
     "appLoaction": "reciever",
     "infomation_via": "db",
-    "infomation_via_other": "mqtt, db, LoRaWAN",
+    "infomation_via_other": ["mqtt, db, LoRaWAN"],
     "otherLocations": "sender, transporter"
   },
   "db": {
-    "host": "d",
+    "host": "localhost",
     "port": 8800
   },
   "mqtt": {
-    "host": "129.169.48.173",
+    "host": "mqtt.docker.local",
     "port": "9001",
     "topic": [
       "Transport_tracking/#"
