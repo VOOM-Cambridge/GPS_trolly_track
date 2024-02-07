@@ -25,8 +25,6 @@ FROM python:3.9
 
 COPY ./requirements.txt /
 RUN pip3 install -r requirements.txt
-RUN sudo chmod a+rw /dev/ttyUSB0
+COPY . ./app
 WORKDIR /app
-ADD ./code/ /app
-
-CMD [ "python3", "/app/findDataGPS.py"]
+CMD [ "python3", "/app/main.py"]
