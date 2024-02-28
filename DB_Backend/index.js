@@ -52,6 +52,19 @@ app.get("/trackingAll", async (req, res) => {
   }
 });
 
+app.get("/trackingTime/", async (req, res ) => {
+  console.log(req.params.value)
+  try {
+    const value = req.query.value; // Extract Tin from query parameters
+    const db = await dbPromise;
+    const query = "SELECT * FROM TRACKING ORDER BY TIME_LAST_ACTION DESC LIMIT " + value.toString()
+    const data = await db.all(query);
+    res.json(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 
 app.post("/startLocation", async (req, res) => {

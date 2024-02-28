@@ -14,4 +14,10 @@ const iconFacStart = new L.Icon({
     iconSize: new L.Point(60, 75),
 });
 
-export { iconFacEnd, iconFacStart};
+const iconOld = new L.Icon({
+    iconUrl: 'http://' + document.location.host,
+    iconRetinaUrl: require('./img/block.png'),
+    iconSize: new L.Point(20, 20),
+});
+
+export { iconFacEnd, iconFacStart, iconOld};

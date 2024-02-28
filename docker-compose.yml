@@ -1,21 +1,21 @@
 version: '2'
 
 services:
-    # data_collection:
-    #     extends:
-    #         file: data_collection/app.yml
-    #         service: app
-    #     networks:
-    #         internal:
-    #             aliases:
-    #                 - database.docker.local
-    #     logging:
-    #             driver: syslog
-    #             options:
-    #                     tag: database.docker.local
-    #     restart: unless-stopped
-    #     depends_on:
-    #         - "sqlite-db"
+    # # data_collection:
+    # #     extends:
+    # #         file: data_collection/app.yml
+    # #         service: app
+    # #     networks:
+    # #         internal:
+    # #             aliases:
+    # #                 - database.docker.local
+    # #     logging:
+    # #             driver: syslog
+    # #             options:
+    # #                     tag: database.docker.local
+    # #     restart: unless-stopped
+    # #     depends_on:
+    # #         - "sqlite-db"
     mapviewer:
         extends:
             file: MapViewer/app.yml

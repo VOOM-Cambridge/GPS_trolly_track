@@ -5,7 +5,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import './index.css';
 import L from 'leaflet';
-import { iconFacEnd, iconFacStart } from './icons';
+import { iconFacEnd, iconFacStart , iconOld} from './icons';
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -17,6 +17,7 @@ const TrackingView = ({config}) => {
   const backendAddress = "http://" +config.db.host + ":" + config.db.port +"/trackingRecent"
   const backendStart = "http://" +config.db.host + ":" + config.db.port +"/startLocation"
   const backendEnd = "http://" +config.db.host + ":" + config.db.port +"/endLocation"
+  const backendFind = "http://" +config.db.host + ":" + config.db.port +"/trackingTime/"
   const wsaddress = 'ws://' + config.mqtt.host + ':' + config.mqtt.port;
   const backend = "http://" +config.db.host + ":" + config.db.port;
   const defaultPositionStart = config.locations[0]
@@ -29,11 +30,14 @@ const TrackingView = ({config}) => {
   let [positionEnd, setPositionEnd] = useState(null);
   let [newPositionStart, setNewPositionStart] = useState(null);
   let [newPositionEnd, setNewPositionEnd] = useState(null);
-  let [current, setCurrent] = useState(defaultCurrent);
+  let [current, setCurrent] = useState(null)                // useState(defaultCurrent);
   let [zoom, setZoom] = useState(null);
   let [centerMap, setCenterMap] = useState(null);
   let [method, setMethod] = useState(config.info.infomation_via); // mqtt, db, LoRaWAN
+  let [history, setHistory] = useState(null);
   const [client, setClient] = useState(null);
+  let [timeOut, setTimeOut] = useState(0);
+
   
 
   delete L.Icon.Default.prototype._getIconUrl;
@@ -65,30 +69,30 @@ const TrackingView = ({config}) => {
         client.on('message', (topic, message) => {
           try{
           var data = JSON.parse(new TextDecoder("utf-8").decode(message))
+          console.log(data)
           //console.log([data.lat, data.lon])
           //console.log(current)
           //handleMessage(data)
 
-          if (current[0] != data.lat && current[1] != data.lon){
-          if (data.lat >=-90 && data.lat <= 90 && data.lon >=-180 && data.lon <= 180){
+          if (current == null || (current[0] != data.coords.latitude && current[1] != data.coords.longitude)){
+          if (data.coords.latitude >=-90 && data.coords.latitude <= 90 && data.coords.longitude >=-180 && data.coords.longitude <= 180){
             if (current != null){
-              console.log("updated current position")
-              console.log([data.lat, data.lon])
-              console.log(current)
+              //console.log("updated current position")
+              //console.log([data.coords.latitude, data.coords.longitude])
+              //console.log(current)
               if (data.lat_dir && data.lon_dir){
-                let dataIn = {"lat": data.lat,"lat_dir": data.lat_dir, "lon": data.lon,"lon_dir": data.lon_dir, "speed":data.speed}
+                let dataIn = {"lat": data.coords.latitude,"lat_dir": data.lat_dir, "lon": data.coords.longitude,"lon_dir": data.lon_dir, "speed":data.speed}
                 axios.post(backend, dataIn)
               }else{
-                let dataIn = {"lat": data.lat,"lat_dir": 0, "lon": data.lon,"lon_dir": 0, "speed":0}
+                let dataIn = {"lat": data.coords.latitude,"lat_dir": 0, "lon": data.coords.longitude,"lon_dir": 0, "speed":0}
                 axios.post(backend, dataIn)
               }
             }
-              const newAr = [data.lat, data.lon]
+              const newAr = [data.coords.latitude, data.coords.longitude]
               const newData = {"name": data.name, "LatLong": newAr}
               setCurrent(newAr);
               setTracking(data);
               
-
           }
           if (data.start){
             if (data.start.LatLong[0] >=-90 && data.start.LatLong[0] <= 90 && data.start.LatLong[1] >=-180 && data.start.LatLong[1] <= 180){
@@ -117,7 +121,7 @@ const TrackingView = ({config}) => {
       };
 
   useEffect(() => {
-    if (current ==null){
+    if (current==null){
     fetchLocation();
     }
     fetchData();
@@ -147,21 +151,23 @@ const TrackingView = ({config}) => {
       const tempPosEnd = {"name": resE.data[0].NAME, "LatLong": [resE.data[0].LAT, resE.data[0].LON]}
       setPositionEnd({"name": resE.data[0].NAME, "LatLong": [resE.data[0].LAT, resE.data[0].LON]})
       setNewPositionEnd({"name": resE.data[0].NAME, "LatLong": [resE.data[0].LAT, resE.data[0].LON]})
-      
-      if(tempPosEnd && tempPosStart){
+      if (current == null){
+        setZoom(17)
+        setCenterMap(defaultCurrent)
+      } else if(tempPosEnd && tempPosStart){
         const expanFac = 1.2
         var maxLat_y = Math.max(tempPosEnd.LatLong[0], tempPosStart.LatLong[0], current[0]);
         var minLat_y = Math.min(tempPosEnd.LatLong[0], tempPosStart.LatLong[0], current[0]);
         var maxLon_x = Math.max(tempPosEnd.LatLong[1], tempPosStart.LatLong[1], current[1]);
         var minLon_x = Math.min(tempPosEnd.LatLong[1], tempPosStart.LatLong[1], current[1]);
     
-        var zoomCalcy = Math.ceil(18 - Math.sqrt(Math.abs(maxLat_y - minLat_y)*expanFac/0.04))
-        var zoomCalcx = Math.ceil(18 - Math.sqrt(Math.abs(maxLon_x - minLon_x)*expanFac/0.04))
-        var latCenter = (maxLat_y + minLat_y)/2
-        var lonCenter = (maxLon_x + minLon_x)/2
+        var zoomCalcy = Math.ceil(18 - Math.sqrt(Math.abs(maxLat_y - minLat_y)*expanFac/0.04));
+        var zoomCalcx = Math.ceil(18 - Math.sqrt(Math.abs(maxLon_x - minLon_x)*expanFac/0.04));
+        var latCenter = (maxLat_y + minLat_y)/2;
+        var lonCenter = (maxLon_x + minLon_x)/2;
         setZoom(Math.min(zoomCalcy , zoomCalcx))
         setCenterMap([latCenter, lonCenter])
-        }
+        } 
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -185,6 +191,9 @@ const TrackingView = ({config}) => {
     fetchTrack();
   }, []);
 
+  const handleChangeTime = (e) => {
+    setTimeOut(e.target.value);
+  };
 
   const handleChangeStart = (e) => {
     setNewPositionStart(config.locations[e.target.value]);
@@ -209,6 +218,22 @@ const TrackingView = ({config}) => {
       //setError(true)
     }
   };
+
+
+  const handleHistory = async (e) => {
+    e.preventDefault()
+    console.log(timeOut)
+    let querry = backendFind + "?value=" + timeOut.toString()
+    const res = await axios.get(querry);
+    console.log(res)
+      if (res.data.length > 0){
+        setHistory(res.data);
+      }else{
+        setHistory(null);
+      }
+  }
+  
+
 
   // Show current location value in console
   //console.log(zoom);
@@ -238,18 +263,40 @@ const TrackingView = ({config}) => {
           <Popup>End position</Popup>
         </Marker>
         {current != null &&
-        <Marker position={current} >
+        <Marker key = "0" position={current} >
           <Popup>Current position</Popup>
         </Marker>
         }
-        
+
+        {history != null && (
+          <>
+            {history.map((item, i) => (
+              <Marker key={i} position={[item.LAT, item.LON]} icon={iconOld}>
+                <Popup>{item.TIME_LAST_ACTION}</Popup>
+              </Marker>
+            ))}
+          </>
+        )}
       </MapContainer>
 }
-
-Last GPS reading:  Lat = {current != null && <b>{current[0]}, Lon ={current[1]}</b>}
-
+  Last GPS reading:  {current != null && <b>Lat = {current[0]}, Lon ={current[1]}</b>}
+  
         </Col>
-        <Col></Col>
+        <Col>
+        <form onSubmit={handleHistory}>
+          <label>
+            Number of readings needed:
+            <input
+              type="number"
+              value={timeOut}
+              onChange={handleChangeTime}
+              required
+            />
+          </label>
+          <button type="submit">Submit</button>
+        </form>
+        <div>Showing: {timeOut}</div>
+        </Col>
         </Row>
       </Card.Body>
       </Card>
