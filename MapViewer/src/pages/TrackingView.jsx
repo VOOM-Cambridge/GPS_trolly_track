@@ -53,6 +53,7 @@ const TrackingView = ({config}) => {
   let [polyData, setPolyData] = useState(null);
   const [clientMQTT, setClientMQTT] = useState(null);
   const [mapOn, setMapOn] = useState(null);
+  const [bounds, setBounds] = useState(null)
 
 
   const storeData = async() =>{
@@ -77,16 +78,30 @@ const TrackingView = ({config}) => {
       const resS = await axios.get(backendStart)
       const resCurr = await axios.get(backendAddress)
       const resE = await axios.get(backendEnd)
-      
-      const tempPosStart = {"name": resS.data[0].NAME, "LatLong": [resS.data[0].LAT, resS.data[0].LON]}
-      setPositionStart({"name": resS.data[0].NAME, "LatLong": [resS.data[0].LAT, resS.data[0].LON]})
-      setNewPositionStart({"name": resS.data[0].NAME, "LatLong": [resS.data[0].LAT, resS.data[0].LON]})
+      let tempPosStart = {}
+      let tempPosEnd = {}
+
+      if (resS.data[0].LAT != null && resS.data[0].LON !=null){
+        tempPosStart = {"name": resS.data[0].NAME, "LatLong": [resS.data[0].LAT, resS.data[0].LON]}
+      } else {
+        tempPosStart = defaultPositionStart
+      }
+      setPositionStart(tempPosStart)
+      setNewPositionStart(tempPosStart)
       //setPositionStart({"name": resS.data.name, "LatLong": [resS.data.lat, resS.data.lon]})
-      //if (resE.data.length > 0){
-      const tempPosEnd = {"name": resE.data[0].NAME, "LatLong": [resE.data[0].LAT, resE.data[0].LON]}
-      setPositionEnd({"name": resE.data[0].NAME, "LatLong": [resE.data[0].LAT, resE.data[0].LON]})
-      setNewPositionEnd({"name": resE.data[0].NAME, "LatLong": [resE.data[0].LAT, resE.data[0].LON]})
-      const tempCurr = [resCurr.data[0].LAT, resCurr.data[0].LON]
+      if (resS.data[0].LAT != null && resS.data[0].LON !=null){
+        tempPosEnd = {"name": resE.data[0].NAME, "LatLong": [resE.data[0].LAT, resE.data[0].LON]}
+      } else {
+        tempPosEnd = defaultPositionEnd
+      }
+      setPositionEnd(tempPosEnd)
+      setNewPositionEnd(tempPosEnd)
+      let tempCurr = [resCurr.data[0].LAT, resCurr.data[0].LON]
+      if (resCurr.data[0] != null && resCurr.data[1] !=null){
+        tempCurr = {"name": resE.data[0].NAME, "LatLong": [resE.data[0].LAT, resE.data[0].LON]}
+      } else {
+        tempCurr = defaultPositionEnd
+      }
       console.log("test test test")
       console.log({current: tempCurr, epos: tempPosEnd, spos: tempPosStart})
       if(tempPosEnd && tempPosStart && tempCurr){
@@ -103,10 +118,11 @@ const TrackingView = ({config}) => {
         console.log(Math.min(zoomCalcy , zoomCalcx))
         setZoom(Math.min(zoomCalcy , zoomCalcx))
         setCenterMap(() => [latCenter, lonCenter])
+        setBounds(L.latLngBounds([current, tempPosEnd.LatLong, tempPosStart.LatLong]));
         
         console.log([latCenter, lonCenter])
         } else if (tempPosEnd && tempPosStart){
-          const expanFac = 1.2
+          const expanFac = 2
           var maxLat_y = Math.max(tempPosEnd.LatLong[0], tempPosStart.LatLong[0]);
           var minLat_y = Math.min(tempPosEnd.LatLong[0], tempPosStart.LatLong[0]);
           var maxLon_x = Math.max(tempPosEnd.LatLong[1], tempPosStart.LatLong[1]);
@@ -115,20 +131,23 @@ const TrackingView = ({config}) => {
           var zoomCalcx = Math.ceil(18 - Math.sqrt(Math.abs(maxLon_x - minLon_x)*expanFac/0.04));
           var latCenter = (maxLat_y + minLat_y)/2;
           var lonCenter = (maxLon_x + minLon_x)/2;
-          console.log([latCenter, lonCenter])
-          console.log(Math.min(zoomCalcy , zoomCalcx))
-          setZoom(Math.min(zoomCalcy , zoomCalcx))
-          setCenterMap(() => [latCenter, lonCenter])
+          console.log([latCenter, lonCenter]);
+          console.log(Math.min(zoomCalcy , zoomCalcx));
+          setZoom(Math.min(zoomCalcy , zoomCalcx));
+          setCenterMap(() => [latCenter, lonCenter]);
+          setBounds(L.latLngBounds([tempPosEnd.LatLong, tempPosStart.LatLong]));
         } else {
           console.error('no fetching data:');
-          setZoom(18)
+          setZoom(defualtZoom)
           setCenterMap(defaultCurrent)
+          setBounds(L.latLngBounds([defaultPositionStart.LatLong, defaultCurrent, defaultPositionEnd.LatLong]));
         }
     } catch (error) {
       console.error('Error fetching data:', error);
       setZoom(18)
       setCenterMap(defaultCentre)
-    }
+      setBounds(L.latLngBounds([defaultPositionStart.LatLong, defaultCurrent, defaultPositionEnd.LatLong]));
+      }
     console.log("end")
 
   };
@@ -141,13 +160,13 @@ const TrackingView = ({config}) => {
       console.log("running")
       storeData()
       fetchData()
+      findBounds()
     } 
   }, [current]);
 
 
 
   useEffect(() => { 
-
 
   const proccessMess = async(message) =>{
     // try to process the mqtt messeage
@@ -165,12 +184,24 @@ const TrackingView = ({config}) => {
           }
           if (data.start){
             if (data.start.LatLong[0] >=-90 && data.start.LatLong[0] <= 90 && data.start.LatLong[1] >=-180 && data.start.LatLong[1] <= 180){
-              setPositionStart(data.start)
+              //setPositionStart(data.start)
+              const posStartSend = {"lat": data.start.LatLong[0], "lon": data.start.LatLong[1], "name": data.start.name}
+             try{
+                await axios.post(backendStart, posStartSend);
+              } catch {
+                console.log("error POSTing start location")
+              }
             }
           }
           if (data.stop){
             if (data.stop.LatLong[0] >=-90 && data.stop.LatLong[0] <= 90 && data.stop.LatLong[1] >=-180 && data.stop.LatLong[1] <= 180){
-              setPositionEnd(data.stop)
+              //setPositionEnd(data.stop)
+              const possEndSend ={"lat": data.stop.LatLong[0], "lon": data.stop.LatLong[1], "name": data.stop.name};
+              try{
+                await axios.post(backendEnd, possEndSend);
+              } catch {
+                console.log("error POSTing end location")
+              }
             }
           }
         }catch (error) {
@@ -221,7 +252,7 @@ const TrackingView = ({config}) => {
     }
     
   } catch {
-    fetchData()
+
   }
 
   }, []);
@@ -255,9 +286,6 @@ const TrackingView = ({config}) => {
     }
   };
 
-
-
-
   const handleHistory = async (e) => {
     e.preventDefault()
     console.log(timeOut)
@@ -280,17 +308,37 @@ const TrackingView = ({config}) => {
     let finalArrayEnd = [];
     let len = data.length;
     for (let i = 1; i < len-1; i++) {
+      if (data[i-1].LAT != null && data[i-1].LON != null && data[i].LAT != null, data[i].LON != null){
       finalArrayStart.push([data[i-1].LAT, data[i-1].LON]);
       finalArrayEnd.push([data[i].LAT, data[i].LON]);
+      }
     }
     let multiPolyline = [finalArrayStart, finalArrayEnd];
     setPolyData(multiPolyline);
     console.log(multiPolyline);
   }
 
-
   // Show current location value in console
   //console.log(zoom);
+  const findBounds = ()=>{
+
+    let boundsMap = null
+    if(current !=null && positionEnd!=null&& positionStart!=null){
+    boundsMap = L.latLngBounds([current, positionStart.LatLong, positionEnd.LatLong]);
+    setBounds(boundsMap)
+    } else if(current !=null&& positionStart!=null){
+    boundsMap = L.latLngBounds([current, positionStart.LatLong]);
+    setBounds(boundsMap)
+    } else if(current !=null&& positionEnd!=null){
+    boundsMap = L.latLngBounds([current, positionEnd.LatLong]);
+    setBounds(boundsMap)
+    } else if(current !=null){
+    boundsMap = L.latLngBounds([current]);
+    setBounds(boundsMap)
+    }
+    console.log("bounds map")
+    console.log(bounds)
+  }
 
     return(
     <div >
@@ -303,25 +351,24 @@ const TrackingView = ({config}) => {
         <Col xs={7}>
           <Card.Title>Live map view</Card.Title>
        
-      {zoom !== null && centerMap !== null && zoom !== undefined && centerMap !== undefined && 
-      <MapContainer center={centerMap} zoom={zoom} scrollWheelZoom={false} style={{ height: "500px"}}>
+      {/* {zoom !== null && centerMap !== null && zoom !== undefined && centerMap !== undefined &&  */}
+      {bounds !== null && centerMap !== null && bounds !== undefined && centerMap !== undefined && 
+      <MapContainer center={centerMap} scrollWheelZoom={false} bounds={bounds} style={{ height: "500px"}} >
         <TileLayer attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        {positionEnd !== null && positionEnd !== undefined && 
+        {positionStart.LatLong[0] !== null && positionStart.LatLong[1] !== null && positionStart.LatLong !== undefined && 
         <Marker position={positionStart.LatLong} icon={iconFacStart}>
           <Popup>Start position</Popup>
         </Marker>
         }
-        {positionStart !== null && positionStart !== undefined && 
+        {positionEnd.LatLong[0] !== null && positionEnd.LatLong[1] !== null && positionEnd.LatLong !== undefined && 
         <Marker position={positionEnd.LatLong} icon={iconFacEnd}>
           <Popup>End position</Popup>
-        </Marker>
-        }
+        </Marker>}
 
         {(current !== null || current !== undefined )&&
         <Marker key = "0" position={current} >
           <Popup>Current position</Popup>
-        </Marker>
-        }
+        </Marker>}
 
         {history !== null && (
           <>

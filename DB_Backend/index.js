@@ -72,6 +72,7 @@ app.post("/startLocation", async (req, res) => {
   try{
     const db = await dbPromise;
     const queryUpdate = "UPDATE TRACKING_START SET LAT = (?), LON = (?),  NAME = (?) ";
+    if(req.body.lat != null && req.body.lon !=null){
     const values = [
       req.body.lat,
       req.body.lon,
@@ -79,6 +80,9 @@ app.post("/startLocation", async (req, res) => {
     ];
     await db.run(queryUpdate, values);
     res.json({ message: "Location of start updated successfully" });
+    } else {
+    res.status(500).json({ error: "null data" });
+  }
   } catch (err) {
     console.error("Error in /startLocation:", err.message);
     res.status(500).json({ error: err.message });
@@ -113,6 +117,7 @@ app.post("/endLocation", async (req, res) => {
   try{
     const db = await dbPromise;
     const queryUpdate = "UPDATE TRACKING_END SET LAT = (?), LON = (?),  NAME = (?) ";
+    if(req.body.lat != null && req.body.lon !=null){
     const values = [
       req.body.lat,
       req.body.lon,
@@ -120,6 +125,9 @@ app.post("/endLocation", async (req, res) => {
     ];
     await db.run(queryUpdate, values);
     res.json({ message: "Location of end updated successfully" });
+  } else {
+    res.status(500).json({ error: "null data" });
+  }
   } catch (err) {
     console.error("Error in /endLocation:", err.message);
     res.status(500).json({ error: err.message });
@@ -137,6 +145,7 @@ app.post("/", async (req, res) => {
   try{
     const db = await dbPromise;
     const queryUpdate = "INSERT INTO TRACKING VALUES (?, ?, ?, ?, ?, ?)";
+    if(req.body.lat != null && req.body.lon !=null){
     const values = [
       req.body.lat,
       req.body.lat_dir,
@@ -147,6 +156,9 @@ app.post("/", async (req, res) => {
     ];
     await db.run(queryUpdate, values);
     res.json({ message: "Data added successfully" });
+  }  else {
+    res.status(500).json({ error: "null data" });
+  }
   } catch (err) {
     console.error("Error in /endLocation:", err.message);
     res.status(500).json({ error: err.message });
