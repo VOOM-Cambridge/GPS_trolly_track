@@ -3,19 +3,19 @@ import L from 'leaflet';
 import './index.css';
 
 const iconFacEnd = new L.Icon({
-    iconUrl: 'http://' + document.location.host,
+    iconUrl: require('./img/factoryEnd.png'),
     iconRetinaUrl: require('./img/factoryEnd.png'),
     iconSize: new L.Point(60, 75),
 });
 
 const iconFacStart = new L.Icon({
-    iconUrl: 'http://' + document.location.host,
+    iconUrl: require('./img/factoryStart.png'),
     iconRetinaUrl: require('./img/factoryStart.png'),
     iconSize: new L.Point(60, 75),
 });
 
 const iconOld = new L.Icon({
-    iconUrl: 'http://' + document.location.host,
+    iconUrl: require('./img/block.png'),
     iconRetinaUrl: require('./img/block.png'),
     iconSize: new L.Point(20, 20),
 });

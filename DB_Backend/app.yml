@@ -1,8 +1,9 @@
-version: '2'
+version: "2"
 
 services:
-        app:
-            build: .
-            volumes:
-            ports:
-                - "8800:8800"
+  app:
+    build: .
+    volumes:
+      - ./data/:/data/
+    ports:
+      - "8800:8800"

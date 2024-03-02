@@ -14,7 +14,7 @@
     "host": "localhost",
     "port": "9001",
     "topic": [
-      "Trolly_tracking/Trolly_1/#"
+      "Trolly_tracking/#"
     ]
   },
   "locations":
